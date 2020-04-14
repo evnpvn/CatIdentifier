@@ -28,7 +28,7 @@ namespace NovaLunaIdentifier
         {
             InitializeComponent();
 
-            const string profileFileDiretory = "C:\\Users\\EvanPavan\\Documents\\Documents\\2 - Personal\\Programming\\2 - Misc\\Udemy WPF course\\Cognitive Services\\NovaLunaProfile_Photos\\";
+            const string profileFileDiretory = "C:\\Users\\EvanPavan\\Documents\\Documents\\2 - Personal\\Programming\\2 - Misc\\Udemy WPF course\\Cognitive Services\\Photos\\NovaLunaProfile_Photos\\";
             const string NovaFile = "NovaProfile.jpg";
             const string LunaFile = "LunaProfile.jpg";
             Nova.Source = new BitmapImage(new Uri(profileFileDiretory + NovaFile));
@@ -54,7 +54,11 @@ namespace NovaLunaIdentifier
             //The selected image file is set to the Image object in the XAML
             string fileExtension = System.IO.Path.GetExtension(filePath);
 
-            if (fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
+            if (filePath == null || filePath == "")
+            {
+                // do nothing
+            }
+            else if (fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
             {
                 NovaResult.Text = "Calculating...";
                 LunaResult.Text = "Calculating...";

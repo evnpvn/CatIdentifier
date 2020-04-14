@@ -98,3 +98,6 @@ x64/
 *.txt
 *.csv
 *.json
+
+# Keys
+*.pfx

@@ -16,6 +16,8 @@ using System.Windows.Shapes;
 using System.Net.Http;
 using System.IO;
 using Newtonsoft.Json;
+using System.Web;
+using System.Net.Http.Headers;
 
 namespace NovaLunaIdentifier
 {
@@ -72,21 +74,41 @@ namespace NovaLunaIdentifier
             }
         }
 
-        //TODO: add text "Calculating" while async is waiting the response from cognitive services.
-        //TODO: Refactor shared code
-
-        //TODO: Add functionality to add image via URL
         private void ImageURL_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if(ImageURL.Text != null)
+            //check if the URL is valid
+            if (Uri.IsWellFormedUriString(ImageURL.Text, UriKind.Absolute) == true)
             {
-                NovaResult.Text = "Calculating...";
-                LunaResult.Text = "Calculating...";
-                SelectedImage.Source = new BitmapImage(new Uri(ImageURL.Text));
-                MakePredictionURLAsync(ImageURL.Text);
+                //call method to check if link is an image
+                if(UrlChecker(ImageURL.Text).Result == true)
+                {
+                    NovaResult.Text = "Calculating...";
+                    LunaResult.Text = "Calculating...";
+                    SelectedImage.Source = new BitmapImage(new Uri(ImageURL.Text));
+                    MakePredictionURLAsync(ImageURL.Text);
+                }
             }
         }
-        
+
+        //TODO: FIX ME - this doesn't work. It passes the URL correctly
+        //but doesn't return anything. 
+        private async Task<bool> UrlChecker(string url)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(url);
+                //I think i need like a continue method or callback here. It's starts waiting and then just chills forever
+                HttpContent content = response.Content;
+
+                string contentType = (content.Headers.GetValues("Content-Type")).First<string>();
+                if (contentType.StartsWith("image"))
+                {
+                    return true;
+                }
+                else return false;
+            }
+        }
+
         private async void MakePredictionURLAsync(string imageURL)
         {
             const string predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/url";

@@ -38,7 +38,7 @@ namespace NovaLunaIdentifier
                     LunaResult.Text = "Calculating...";
                     SelectedImage.Source = new BitmapImage(new Uri(ImageURL.Text));
 
-                    string responseString = webServices.MakePredictionURLAsync(ImageURL.Text).Result;
+                    string responseString = webServices.UrlPredictionAsync(ImageURL.Text).Result;
 
                     //Deserialize the response
                     //When I deserialize it I'll end up with a Collection<Predictions>
@@ -80,7 +80,7 @@ namespace NovaLunaIdentifier
             //The selected image file is set to the Image object in the XAML
             string fileExtension = System.IO.Path.GetExtension(filePath);
 
-            if (filePath != null || filePath != "")
+            if (filePath != null && filePath != "")
             {
                 if (fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
                 {
@@ -93,7 +93,7 @@ namespace NovaLunaIdentifier
                         SelectedImage.Source = new BitmapImage(new Uri(filePath));
 
                         WebServices webServices = new WebServices();
-                        string responseString = webServices.MakePredictionLocalImageAsync(imageFile).Result;
+                        string responseString = webServices.LocalfilePredictionAsync(imageFile).Result;
 
                         //Deserialize the response
                         //When I deserialize it I'll end up with a Collection<Predictions>

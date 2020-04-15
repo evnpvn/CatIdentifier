@@ -28,7 +28,7 @@ namespace NovaLunaIdentifier
             }
         }
 
-        public async Task<string> MakePredictionURLAsync(string imageURL)
+        public async Task<string> UrlPredictionAsync(string imageURL)
         {
             const string predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/url";
             const string predictionKeyName = "Prediction-Key";
@@ -53,8 +53,11 @@ namespace NovaLunaIdentifier
             }
         }
 
+        //I wonder if this should just be an overload of a single method that takes either a URL or an image file
+        //Then passes that off to another method that is the difference between this one and the other.
+
         //Take image and use an http: request to send to cognitive services
-        public async Task<string> MakePredictionLocalImageAsync(byte[] imageFile)
+        public async Task<string> LocalfilePredictionAsync(byte[] imageFile)
         {
             const string predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/image";
             const string predictionKeyName = "Prediction-Key";

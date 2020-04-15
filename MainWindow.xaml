@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:NovaLunaIdentifier"
         mc:Ignorable="d"
-        Title="Nova and Luna identifier" Height="500" Width="700" Background="LightGray">
+        Title="Nova and Luna identifier" Height="500" Width="700" 
+        Background="LightGray" MinWidth="700" MinHeight="500">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>

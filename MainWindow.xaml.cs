@@ -56,21 +56,30 @@ namespace NovaLunaIdentifier
             //The selected image file is set to the Image object in the XAML
             string fileExtension = System.IO.Path.GetExtension(filePath);
 
-            if (filePath == null || filePath == "")
+            if (filePath != null || filePath != "")
             {
-                // do nothing
-            }
-            else if (fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
-            {
-                NovaResult.Text = "Calculating...";
-                LunaResult.Text = "Calculating...";
-                SelectedImage.Source = new BitmapImage(new Uri(filePath));
-                MakePredictionLocalImageAsync(filePath);
-            }
-            else
-            {
-                MessageBox.Show("Selected file is not a supported image file type. Please upload a JPEG or PNG image",
-                                "Unable to upload image", MessageBoxButton.OK, MessageBoxImage.Warning);
+                if(fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
+                {
+                    //convert the file into a byte array because the content type that the Cogservices API expects is a byte stream (octet-stream)
+                    byte[] imageFile = File.ReadAllBytes(filePath);
+                    if (imageFile.Length < 4000000)
+                    {
+                        NovaResult.Text = "Calculating...";
+                        LunaResult.Text = "Calculating...";
+                        SelectedImage.Source = new BitmapImage(new Uri(filePath));
+                        MakePredictionLocalImageAsync(imageFile);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Selected file is more than 4mb",
+                                    "Unable to upload image", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Selected file is not a supported image file type. Please upload a JPEG or PNG image",
+                                    "Unable to upload image", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
         }
 
@@ -80,7 +89,7 @@ namespace NovaLunaIdentifier
             if (Uri.IsWellFormedUriString(ImageURL.Text, UriKind.Absolute) == true)
             {
                 //call method to check if link is an image
-                if(UrlChecker(ImageURL.Text).Result == true)
+                if(UrlChecker(ImageURL.Text) == true)
                 {
                     NovaResult.Text = "Calculating...";
                     LunaResult.Text = "Calculating...";
@@ -89,16 +98,14 @@ namespace NovaLunaIdentifier
                 }
             }
         }
-
-        //TODO: FIX ME - this doesn't work. It passes the URL correctly
-        //but doesn't return anything. 
-        private async Task<bool> UrlChecker(string url)
+ 
+        private bool UrlChecker(string url)
         {
             using (HttpClient client = new HttpClient())
             {
-                HttpResponseMessage response = await client.GetAsync(url);
-                //I think i need like a continue method or callback here. It's starts waiting and then just chills forever
-                HttpContent content = response.Content;
+                Task<HttpResponseMessage> response = client.GetAsync(url);
+
+                HttpContent content = response.Result.Content;
 
                 string contentType = (content.Headers.GetValues("Content-Type")).First<string>();
                 if (contentType.StartsWith("image"))
@@ -128,7 +135,7 @@ namespace NovaLunaIdentifier
 
                 HttpContent content = new StringContent(bodyPrefix + imageURL + bodySuffix);
 
-                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentTypeValue);
+                content.Headers.ContentType = new MediaTypeHeaderValue(contentTypeValue);
                 HttpResponseMessage response = await client.PostAsync(predictionURL, content);
 
                 string responseString = await response.Content.ReadAsStringAsync();
@@ -154,7 +161,8 @@ namespace NovaLunaIdentifier
         }
 
         //Take image and use an http: request to send to cognitive services
-        private async void MakePredictionLocalImageAsync(string filePath)
+        //maybe it needs both filePath + imageFile (byte[])
+        private async void MakePredictionLocalImageAsync(byte[] imageFile)
         {
             const string predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/image";
             
@@ -162,19 +170,22 @@ namespace NovaLunaIdentifier
             const string predictionKeyValue = "a0998615d63b423387cfbb26be1de9d4";
             const string contentTypeValue = "application/octet-stream";
 
-            //convert the file into a byte array because the content type that the Cogservices API expects is a byte stream (octet-stream)
-            byte[] file = File.ReadAllBytes(filePath);
-
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add(predictionKeyName, predictionKeyValue);
 
-                using (HttpContent content = new ByteArrayContent(file))
+                using (HttpContent content = new ByteArrayContent(imageFile))
                 {
                     content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentTypeValue);
-                    HttpResponseMessage response = await client.PostAsync(predictionURL, content);
+                    Task<HttpResponseMessage> response = client.PostAsync(predictionURL, content);
 
-                    string responseString = await response.Content.ReadAsStringAsync();
+                    await response;
+                    //but now I'm left with this response still as a Task<HttpResponseMessage>
+                    //I want it to be of type HttpResponseMessage
+                    //I think I figured it out. 
+                    //It task as a task until you call the Result property which returns the value
+
+                    string responseString = await response.Result.Content.ReadAsStringAsync();
 
                     //Deserialize the response
                     //When I deserialize it I'll end up with a Collection<Predictions>
@@ -182,13 +193,13 @@ namespace NovaLunaIdentifier
                     predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
 
                     Prediction[] predictions = predictionhead.Predictions;
-                    foreach(Prediction prediction in predictions)
+                    foreach (Prediction prediction in predictions)
                     {
-                        if(prediction.Tag == "Luna")
+                        if (prediction.Tag == "Luna")
                         {
                             LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
                         }
-                        else if(prediction.Tag == "Nova")
+                        else if (prediction.Tag == "Nova")
                         {
                             NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
                         }

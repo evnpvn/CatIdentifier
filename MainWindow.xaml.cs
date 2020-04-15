@@ -1,23 +1,10 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Net.Http;
 using System.IO;
 using Newtonsoft.Json;
-using System.Web;
-using System.Net.Http.Headers;
+using Microsoft.Win32;
 
 namespace NovaLunaIdentifier
 {
@@ -30,11 +17,48 @@ namespace NovaLunaIdentifier
         {
             InitializeComponent();
 
+            //load all constant variables and settings
             const string profileFileDiretory = "C:\\Users\\EvanPavan\\Documents\\Documents\\2 - Personal\\Programming\\2 - Misc\\Udemy WPF course\\Cognitive Services\\Photos\\NovaLunaProfile_Photos\\";
             const string NovaFile = "NovaProfile.jpg";
             const string LunaFile = "LunaProfile.jpg";
             Nova.Source = new BitmapImage(new Uri(profileFileDiretory + NovaFile));
             Luna.Source = new BitmapImage(new Uri(profileFileDiretory + LunaFile));
+        }
+
+        private void ImageURL_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            //check if the URL is valid
+            if (Uri.IsWellFormedUriString(ImageURL.Text, UriKind.Absolute) == true)
+            {
+                //call method to check if link is an image
+                WebServices webServices = new WebServices();
+                if (webServices.UrlChecker(ImageURL.Text) == true)
+                {
+                    NovaResult.Text = "Calculating...";
+                    LunaResult.Text = "Calculating...";
+                    SelectedImage.Source = new BitmapImage(new Uri(ImageURL.Text));
+
+                    string responseString = webServices.MakePredictionURLAsync(ImageURL.Text).Result;
+
+                    //Deserialize the response
+                    //When I deserialize it I'll end up with a Collection<Predictions>
+                    PredictionHeader predictionhead = new PredictionHeader();
+                    predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
+
+                    Prediction[] predictions = predictionhead.Predictions;
+                    foreach (Prediction prediction in predictions)
+                    {
+                        if (prediction.Tag == "Luna")
+                        {
+                            LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
+                        }
+                        else if (prediction.Tag == "Nova")
+                        {
+                            NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
+                        }
+                    }
+                }
+            }
         }
 
         private void AddPicture_Click(object sender, RoutedEventArgs e)
@@ -58,7 +82,7 @@ namespace NovaLunaIdentifier
 
             if (filePath != null || filePath != "")
             {
-                if(fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
+                if (fileExtension == ".jpeg" || fileExtension == ".jpg" || fileExtension == ".png")
                 {
                     //convert the file into a byte array because the content type that the Cogservices API expects is a byte stream (octet-stream)
                     byte[] imageFile = File.ReadAllBytes(filePath);
@@ -67,7 +91,28 @@ namespace NovaLunaIdentifier
                         NovaResult.Text = "Calculating...";
                         LunaResult.Text = "Calculating...";
                         SelectedImage.Source = new BitmapImage(new Uri(filePath));
-                        MakePredictionLocalImageAsync(imageFile);
+
+                        WebServices webServices = new WebServices();
+                        string responseString = webServices.MakePredictionLocalImageAsync(imageFile).Result;
+
+                        //Deserialize the response
+                        //When I deserialize it I'll end up with a Collection<Predictions>
+                        PredictionHeader predictionhead = new PredictionHeader();
+                        predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
+
+                        Prediction[] predictions = predictionhead.Predictions;
+                        foreach (Prediction prediction in predictions)
+                        {
+                            if (prediction.Tag == "Luna")
+                            {
+                                LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
+                            }
+                            else if (prediction.Tag == "Nova")
+                            {
+                                NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
+
+                            }
+                        }
                     }
                     else
                     {
@@ -79,131 +124,6 @@ namespace NovaLunaIdentifier
                 {
                     MessageBox.Show("Selected file is not a supported image file type. Please upload a JPEG or PNG image",
                                     "Unable to upload image", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-        }
-
-        private void ImageURL_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //check if the URL is valid
-            if (Uri.IsWellFormedUriString(ImageURL.Text, UriKind.Absolute) == true)
-            {
-                //call method to check if link is an image
-                if(UrlChecker(ImageURL.Text) == true)
-                {
-                    NovaResult.Text = "Calculating...";
-                    LunaResult.Text = "Calculating...";
-                    SelectedImage.Source = new BitmapImage(new Uri(ImageURL.Text));
-                    MakePredictionURLAsync(ImageURL.Text);
-                }
-            }
-        }
- 
-        private bool UrlChecker(string url)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                Task<HttpResponseMessage> response = client.GetAsync(url);
-
-                HttpContent content = response.Result.Content;
-
-                string contentType = (content.Headers.GetValues("Content-Type")).First<string>();
-                if (contentType.StartsWith("image"))
-                {
-                    return true;
-                }
-                else return false;
-            }
-        }
-
-        private async void MakePredictionURLAsync(string imageURL)
-        {
-            const string predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/url";
-
-            const string predictionKeyName = "Prediction-Key";
-            const string predictionKeyValue = "a0998615d63b423387cfbb26be1de9d4";
-            const string contentTypeValue = "application/json";
-
-            const string bodyPrefix = "{\"Url\": \"";
-            const string bodySuffix = "\"}";
-
-            //TODO: create a new HTTP post to the prediction API
-            using (HttpClient client = new HttpClient())
-            {
-                //add the client headers
-                client.DefaultRequestHeaders.Add(predictionKeyName, predictionKeyValue);
-
-                HttpContent content = new StringContent(bodyPrefix + imageURL + bodySuffix);
-
-                content.Headers.ContentType = new MediaTypeHeaderValue(contentTypeValue);
-                HttpResponseMessage response = await client.PostAsync(predictionURL, content);
-
-                string responseString = await response.Content.ReadAsStringAsync();
-
-                //Deserialize the response
-                //When I deserialize it I'll end up with a Collection<Predictions>
-                PredictionHeader predictionhead = new PredictionHeader();
-                predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
-
-                Prediction[] predictions = predictionhead.Predictions;
-                foreach (Prediction prediction in predictions)
-                {
-                    if (prediction.Tag == "Luna")
-                    {
-                        LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                    }
-                    else if (prediction.Tag == "Nova")
-                    {
-                        NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                    }
-                }
-            }
-        }
-
-        //Take image and use an http: request to send to cognitive services
-        //maybe it needs both filePath + imageFile (byte[])
-        private async void MakePredictionLocalImageAsync(byte[] imageFile)
-        {
-            const string predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/image";
-            
-            const string predictionKeyName = "Prediction-Key";
-            const string predictionKeyValue = "a0998615d63b423387cfbb26be1de9d4";
-            const string contentTypeValue = "application/octet-stream";
-
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Add(predictionKeyName, predictionKeyValue);
-
-                using (HttpContent content = new ByteArrayContent(imageFile))
-                {
-                    content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentTypeValue);
-                    Task<HttpResponseMessage> response = client.PostAsync(predictionURL, content);
-
-                    await response;
-                    //but now I'm left with this response still as a Task<HttpResponseMessage>
-                    //I want it to be of type HttpResponseMessage
-                    //I think I figured it out. 
-                    //It task as a task until you call the Result property which returns the value
-
-                    string responseString = await response.Result.Content.ReadAsStringAsync();
-
-                    //Deserialize the response
-                    //When I deserialize it I'll end up with a Collection<Predictions>
-                    PredictionHeader predictionhead = new PredictionHeader();
-                    predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
-
-                    Prediction[] predictions = predictionhead.Predictions;
-                    foreach (Prediction prediction in predictions)
-                    {
-                        if (prediction.Tag == "Luna")
-                        {
-                            LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                        }
-                        else if (prediction.Tag == "Nova")
-                        {
-                            NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                        }
-                    }
                 }
             }
         }

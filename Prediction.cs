@@ -7,15 +7,16 @@ using Newtonsoft.Json;
 
 namespace NovaLunaIdentifier
 {
-    //class Prediction
-    //{
-    //    public double Probability { get; set; }
-    //    public string TagName { get; set; }
-    //    public string TagId { get; set; }
-    //}
-
-    public class PredictionHeader
+    /// <summary>
+    /// Functionality for parsing MS cognitive services results into a type 
+    /// and determining results for Nova and Luna 
+    /// </summary>
+    public class Prediction
     {
+        public string LunaPrediction { get; set; }
+
+        public string NovaPrediction { get; set; }
+
         [JsonProperty("id")]
         public Guid Id { get; set; }
 
@@ -29,10 +30,31 @@ namespace NovaLunaIdentifier
         public DateTimeOffset Created { get; set; }
 
         [JsonProperty("predictions")]
-        public Prediction[] Predictions { get; set; }
+        public PredictionContent[] PredictionContents { get; set; }
+
+
+        public void Deserialize(string jsonContent, out Prediction prediction)
+        {
+            prediction = JsonConvert.DeserializeObject<Prediction>(jsonContent);
+        }
+
+        public void DetermineResults()
+        {
+            foreach (PredictionContent prediction in PredictionContents)
+            {
+                if (prediction.Tag == "Luna")
+                {
+                    LunaPrediction = String.Format("{0:P2} chance", prediction.Probability);
+                }
+                else if (prediction.Tag == "Nova")
+                {
+                    NovaPrediction = String.Format("{0:P2} chance", prediction.Probability);
+                }
+            }
+        }
     }
 
-    public class Prediction
+    public class PredictionContent
     {
         [JsonProperty("probability")]
         public double Probability { get; set; }

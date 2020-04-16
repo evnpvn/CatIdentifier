@@ -40,23 +40,12 @@ namespace NovaLunaIdentifier
 
                     string responseString = webServices.UrlPredictionAsync(ImageURL.Text).Result;
 
-                    //Deserialize the response
-                    //When I deserialize it I'll end up with a Collection<Predictions>
-                    PredictionHeader predictionhead = new PredictionHeader();
-                    predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
-
-                    Prediction[] predictions = predictionhead.Predictions;
-                    foreach (Prediction prediction in predictions)
-                    {
-                        if (prediction.Tag == "Luna")
-                        {
-                            LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                        }
-                        else if (prediction.Tag == "Nova")
-                        {
-                            NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                        }
-                    }
+                    Prediction prediction = new Prediction();
+                    prediction.Deserialize(responseString, out prediction);
+                    prediction.DetermineResults();
+                   
+                    LunaResult.Text = prediction.LunaPrediction;
+                    NovaResult.Text = prediction.NovaPrediction;
                 }
             }
         }
@@ -95,24 +84,13 @@ namespace NovaLunaIdentifier
                         WebServices webServices = new WebServices();
                         string responseString = webServices.LocalfilePredictionAsync(imageFile).Result;
 
-                        //Deserialize the response
-                        //When I deserialize it I'll end up with a Collection<Predictions>
-                        PredictionHeader predictionhead = new PredictionHeader();
-                        predictionhead = (JsonConvert.DeserializeObject<PredictionHeader>(responseString));
+                        Prediction prediction = new Prediction();
+                        prediction.Deserialize(responseString, out prediction);
+                        prediction.DetermineResults();
 
-                        Prediction[] predictions = predictionhead.Predictions;
-                        foreach (Prediction prediction in predictions)
-                        {
-                            if (prediction.Tag == "Luna")
-                            {
-                                LunaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
-                            }
-                            else if (prediction.Tag == "Nova")
-                            {
-                                NovaResult.Text = String.Format("{0:P2} chance", prediction.Probability);
+                        LunaResult.Text = prediction.LunaPrediction;
+                        NovaResult.Text = prediction.NovaPrediction;
 
-                            }
-                        }
                     }
                     else
                     {

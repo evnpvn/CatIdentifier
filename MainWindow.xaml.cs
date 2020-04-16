@@ -32,13 +32,15 @@ namespace NovaLunaIdentifier
             {
                 //call method to check if link is an image
                 WebServices webServices = new WebServices();
-                if (webServices.UrlChecker(ImageURL.Text) == true)
+                webServices.CatImageUrl = ImageURL.Text;
+
+                if (webServices.UrlChecker(webServices.CatImageUrl) == true)
                 {
                     NovaResult.Text = "Calculating...";
                     LunaResult.Text = "Calculating...";
-                    SelectedImage.Source = new BitmapImage(new Uri(ImageURL.Text));
+                    SelectedImage.Source = new BitmapImage(new Uri(webServices.CatImageUrl));
 
-                    string responseString = webServices.UrlPredictionAsync(ImageURL.Text).Result;
+                    string responseString = webServices.PredictionAsync().Result;
 
                     Prediction prediction = new Prediction();
                     prediction.Deserialize(responseString, out prediction);
@@ -82,7 +84,7 @@ namespace NovaLunaIdentifier
                         SelectedImage.Source = new BitmapImage(new Uri(filePath));
 
                         WebServices webServices = new WebServices();
-                        string responseString = webServices.LocalfilePredictionAsync(imageFile).Result;
+                        string responseString = webServices.PredictionAsync(imageFile).Result;
 
                         Prediction prediction = new Prediction();
                         prediction.Deserialize(responseString, out prediction);

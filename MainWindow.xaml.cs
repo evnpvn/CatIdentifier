@@ -3,8 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.IO;
-using Newtonsoft.Json;
 using Microsoft.Win32;
+using System.Threading.Tasks;
 
 namespace NovaLunaIdentifier
 {
@@ -32,6 +32,7 @@ namespace NovaLunaIdentifier
             {
                 //call method to check if link is an image
                 WebServices webServices = new WebServices();
+                webServices.ImageIsLocal = false;
                 webServices.CatImageUrl = ImageURL.Text;
 
                 if (webServices.UrlChecker(webServices.CatImageUrl) == true)
@@ -40,7 +41,9 @@ namespace NovaLunaIdentifier
                     LunaResult.Text = "Calculating...";
                     SelectedImage.Source = new BitmapImage(new Uri(webServices.CatImageUrl));
 
+                    //calling my Prediction Async method and then getting the result.
                     string responseString = webServices.PredictionAsync().Result;
+                    
 
                     Prediction prediction = new Prediction();
                     prediction.Deserialize(responseString, out prediction);
@@ -54,22 +57,15 @@ namespace NovaLunaIdentifier
 
         private void AddPicture_Click(object sender, RoutedEventArgs e)
         {
-            //Creates a new instance of the file directory
-            //By default it filters for jpeg and png image types
-            //Also looks in the MyPictures folder by default
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.Filter = "Image files |*.png;*.jpg;*jpeg |All files |*.*";
             fileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
-            //Actually opens the file directory at this point
             fileDialog.ShowDialog();
 
-            //The selected image file is set to a variable
             string filePath = fileDialog.FileName;
 
-            //Checks to ensure the file type is the desired image and file then
-            //The selected image file is set to the Image object in the XAML
-            string fileExtension = System.IO.Path.GetExtension(filePath);
+            string fileExtension = Path.GetExtension(filePath);
 
             if (filePath != null && filePath != "")
             {
@@ -84,6 +80,7 @@ namespace NovaLunaIdentifier
                         SelectedImage.Source = new BitmapImage(new Uri(filePath));
 
                         WebServices webServices = new WebServices();
+                        webServices.ImageIsLocal = true;
                         string responseString = webServices.PredictionAsync(imageFile).Result;
 
                         Prediction prediction = new Prediction();
@@ -92,7 +89,6 @@ namespace NovaLunaIdentifier
 
                         LunaResult.Text = prediction.LunaPrediction;
                         NovaResult.Text = prediction.NovaPrediction;
-
                     }
                     else
                     {

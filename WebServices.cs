@@ -10,33 +10,42 @@ namespace NovaLunaIdentifier
     /// </summary>
     public class WebServices
     {
-        public bool ImageIsLocal { get; set; }
-
         private const string PredictionKeyName = "Prediction-Key";
-
         private const string PredictionKeyValue = "a0998615d63b423387cfbb26be1de9d4";
+        private const string BaseURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/";
+
+        public bool ImageIsLocal { get; set; }
+        public string CatImageUrl { get; set; }
 
         private string ContentTypeValue
         {
             get 
             {   
-                if (ImageIsLocal == true)   { return "application/octet-stream"; }
-                else { return "application/json"; }
+                if (ImageIsLocal == true)   
+                { 
+                    return "application/octet-stream"; 
+                }
+                else 
+                { 
+                    return "application/json"; 
+                }
             }
         }
 
-        private string _predictionURL;
-        private string PredictionURL
+        public string PredictionURL
         {
             get
             {   
-                if (ImageIsLocal == true)   {return _predictionURL + "image"; }
-                else { return _predictionURL + "url"; }
+                if (ImageIsLocal == true)
+                {
+                    return BaseURL + "image"; 
+                }
+                else 
+                {
+                    return BaseURL + "url";
+                }
             }
-            set {  _predictionURL = "https://eastus.api.cognitive.microsoft.com/customvision/v3.0/Prediction/2a12297c-2b81-4b75-ab12-38bebfbbea6e/classify/iterations/NovaLunaIdentifier%20Iteration1/"; }
         }
-
-        public string CatImageUrl { get; set; }
 
         private string Body
         {
@@ -52,14 +61,14 @@ namespace NovaLunaIdentifier
             {
                 HttpContent content = new StringContent(Body);
 
-
                 client.DefaultRequestHeaders.Add(PredictionKeyName, PredictionKeyValue);
 
                 content.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeValue);
-                Task<HttpResponseMessage> response = client.PostAsync(PredictionURL, content);
 
-                string responseString = await response.Result.Content.ReadAsStringAsync();
-                return responseString;
+                HttpResponseMessage response = client.PostAsync(PredictionURL, content).Result;
+
+                string responseContent = await response.Content.ReadAsStringAsync();
+                return responseContent;
             }
         }
 
@@ -72,10 +81,11 @@ namespace NovaLunaIdentifier
                 client.DefaultRequestHeaders.Add(PredictionKeyName, PredictionKeyValue);
 
                 content.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeValue);
-                Task<HttpResponseMessage> response = client.PostAsync(PredictionURL, content);
 
-                string responseString = await response.Result.Content.ReadAsStringAsync();
-                return responseString;
+                HttpResponseMessage response = client.PostAsync(PredictionURL, content).Result;
+
+                string responseContent = await response.Content.ReadAsStringAsync();
+                return responseContent;
             }
         }
 

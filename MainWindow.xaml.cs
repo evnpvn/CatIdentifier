@@ -43,7 +43,7 @@ namespace NovaLunaIdentifier
                     //calling Prediction Async method and then getting the result immediately.
                     string responseString = webServices.PredictionAsync().Result;
                     
-                    Prediction prediction = new Prediction();
+                    CustomVision prediction = new CustomVision();
                     prediction.Deserialize(responseString, out prediction);
                     prediction.DetermineResults();
                    
@@ -81,7 +81,7 @@ namespace NovaLunaIdentifier
                         webServices.ImageIsLocal = true;
                         string responseString = webServices.PredictionAsync(imageFile).Result;
 
-                        Prediction prediction = new Prediction();
+                        CustomVision prediction = new CustomVision();
                         prediction.Deserialize(responseString, out prediction);
                         prediction.DetermineResults();
 

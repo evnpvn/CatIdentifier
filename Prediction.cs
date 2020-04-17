@@ -7,7 +7,19 @@ namespace NovaLunaIdentifier
     /// Functionality for parsing MS cognitive services results into a type 
     /// and determining results for Nova and Luna 
     /// </summary>
+    /// 
     public class Prediction
+    {
+        [JsonProperty("probability")]
+        public double Probability { get; set; }
+
+        [JsonProperty("tagId")]
+        public Guid TagId { get; set; }
+
+        [JsonProperty("tagName")]
+        public string Tag { get; set; }
+    }
+    public class CustomVision
     {
         public string LunaPrediction { get; set; }
 
@@ -26,17 +38,17 @@ namespace NovaLunaIdentifier
         public DateTimeOffset Created { get; set; }
 
         [JsonProperty("predictions")]
-        public PredictionContent[] PredictionContents { get; set; }
+        public Prediction[] PredictionContents { get; set; }
 
 
-        public void Deserialize(string jsonContent, out Prediction prediction)
+        public void Deserialize(string jsonContent, out CustomVision prediction)
         {
-            prediction = JsonConvert.DeserializeObject<Prediction>(jsonContent);
+            prediction = JsonConvert.DeserializeObject<CustomVision>(jsonContent);
         }
 
         public void DetermineResults()
         {
-            foreach (PredictionContent prediction in PredictionContents)
+            foreach (Prediction prediction in PredictionContents)
             {
                 if (prediction.Tag == "Luna")
                 {
@@ -48,17 +60,5 @@ namespace NovaLunaIdentifier
                 }
             }
         }
-    }
-
-    public class PredictionContent
-    {
-        [JsonProperty("probability")]
-        public double Probability { get; set; }
-
-        [JsonProperty("tagId")]
-        public Guid TagId { get; set; }
-
-        [JsonProperty("tagName")]
-        public string Tag { get; set; }
     }
 }

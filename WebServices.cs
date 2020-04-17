@@ -60,13 +60,10 @@ namespace NovaLunaIdentifier
             using (HttpClient client = new HttpClient())
             {
                 HttpContent content = new StringContent(Body);
-
                 client.DefaultRequestHeaders.Add(PredictionKeyName, PredictionKeyValue);
-
                 content.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeValue);
 
                 HttpResponseMessage response = client.PostAsync(PredictionURL, content).Result;
-
                 string responseContent = await response.Content.ReadAsStringAsync();
                 return responseContent;
             }
@@ -77,13 +74,10 @@ namespace NovaLunaIdentifier
             using (HttpClient client = new HttpClient())
             {
                 HttpContent content = new ByteArrayContent(imageFile);
-
                 client.DefaultRequestHeaders.Add(PredictionKeyName, PredictionKeyValue);
-
                 content.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeValue);
 
                 HttpResponseMessage response = client.PostAsync(PredictionURL, content).Result;
-
                 string responseContent = await response.Content.ReadAsStringAsync();
                 return responseContent;
             }

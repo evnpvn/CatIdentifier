@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.IO;
 using Microsoft.Win32;
-using System.Threading.Tasks;
 
 namespace NovaLunaIdentifier
 {
@@ -30,10 +29,10 @@ namespace NovaLunaIdentifier
             //check if the URL is valid
             if (Uri.IsWellFormedUriString(ImageURL.Text, UriKind.Absolute) == true)
             {
-                //call method to check if link is an image
                 WebServices webServices = new WebServices();
                 webServices.ImageIsLocal = false;
                 webServices.CatImageUrl = ImageURL.Text;
+            
 
                 if (webServices.UrlChecker(webServices.CatImageUrl) == true)
                 {
@@ -41,10 +40,9 @@ namespace NovaLunaIdentifier
                     LunaResult.Text = "Calculating...";
                     SelectedImage.Source = new BitmapImage(new Uri(webServices.CatImageUrl));
 
-                    //calling my Prediction Async method and then getting the result.
+                    //calling Prediction Async method and then getting the result immediately.
                     string responseString = webServices.PredictionAsync().Result;
                     
-
                     Prediction prediction = new Prediction();
                     prediction.Deserialize(responseString, out prediction);
                     prediction.DetermineResults();
